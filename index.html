@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>قدراتي - Quduraty</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Tajawal', sans-serif; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen flex flex-col">
+
+  <!-- Header -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+    <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3 space-x-reverse cursor-pointer" onclick="app.navigate('projects')">
+        <div class="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white font-extrabold text-xl shadow">
+          ق
+        </div>
+        <div>
+          <h1 class="font-extrabold text-lg leading-tight text-slate-800">قُـدراتي</h1>
+          <p class="text-xs text-slate-600">منصة التدريب اللفظي المحاكية</p>
+        </div>
+      </div>
+      <div id="nav-actions" class="flex items-center space-x-2 space-x-reverse"></div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="max-w-6xl mx-auto px-4 py-8 flex-1 w-full">
+    
+    <!-- View: Projects List -->
+    <section id="view-projects" class="space-y-6">
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-2xl border border-slate-200">
+        <div>
+          <h2 class="text-2xl font-bold text-slate-800">مشاريع المذاكرة</h2>
+          <p class="text-sm text-slate-600">أنشئ مشروعاً لكل حقيبة تدريبية أو ملف أسئلة</p>
+        </div>
+        <button onclick="app.openNewProjectModal()" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-xl transition-all shadow-sm">
+          + مشروع جديد
+        </button>
+      </div>
+
+      <div id="projects-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"></div>
+    </section>
+
+    <!-- View: Project Detail & Models -->
+    <section id="view-project-detail" class="hidden space-y-6">
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-2xl border border-slate-200">
+        <div class="space-y-1">
+          <div class="flex items-center space-x-2 space-x-reverse">
+            <button onclick="app.navigate('projects')" class="text-sm text-indigo-600 hover:underline">المشاريع</button>
+            <span class="text-slate-600">/</span>
+            <h2 id="project-title" class="text-2xl font-bold text-slate-800"></h2>
+          </div>
+          <p id="project-desc" class="text-sm text-slate-600"></p>
+        </div>
+        <div class="flex items-center space-x-2 space-x-reverse">
+          <button onclick="app.openImportModal()" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-xl transition-all shadow-sm">
+            استيراد أسئلة (JSON)
+          </button>
+        </div>
+      </div>
+
+      <div id="models-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"></div>
+    </section>
+
+    <!-- View: Exam Running -->
+    <section id="view-exam" class="hidden space-y-6">
+      <!-- Exam Bar -->
+      <div class="sticky top-20 z-20 bg-white/90 backdrop-blur border border-slate-200 p-4 rounded-2xl flex items-center justify-between shadow-sm">
+        <div>
+          <span class="text-xs font-bold text-indigo-600 block uppercase" id="exam-model-badge">نموذج</span>
+          <h3 id="exam-model-title" class="font-bold text-slate-800 text-lg"></h3>
+        </div>
+        <div class="flex items-center space-x-4 space-x-reverse">
+          <div class="text-left bg-slate-100 px-4 py-2 rounded-xl">
+            <span class="text-xs text-slate-600 block">الوقت المتبقي</span>
+            <span id="exam-timer" class="font-mono text-lg font-black text-rose-600">00:00</span>
+          </div>
+          <button onclick="app.submitExamConfirmation()" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl transition-all shadow-sm">
+            تسليم الاختبار
+          </button>
+        </div>
+      </div>
+
+      <div id="exam-questions-list" class="space-y-6"></div>
+    </section>
+
+    <!-- View: Exam Summary & Review -->
+    <section id="view-results" class="hidden space-y-6">
+      <div class="bg-white p-6 rounded-2xl border border-slate-200 space-y-6">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h2 class="text-2xl font-bold text-slate-800">نتيجة الاختبار</h2>
+            <p id="result-model-title" class="text-sm text-slate-600"></p>
+          </div>
+          <div class="flex items-center space-x-2 space-x-reverse">
+            <button onclick="app.retakeCurrentExam()" class="px-4 py-2 border border-slate-300 hover:bg-slate-50 font-medium rounded-xl transition-all">
+              إعادة الاختبار
+            </button>
+            <button onclick="app.navigate('project-detail')" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-xl transition-all">
+              العودة للنماذج
+            </button>
+          </div>
+        </div>
+
+        <!-- Metric Grid -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div class="bg-slate-50 border border-slate-200 p-4 rounded-xl text-center">
+            <span class="text-xs text-slate-600 font-bold block mb-1">الأسئلة المحلولة</span>
+            <span id="stat-answered" class="text-2xl font-black text-slate-800">0</span>
+            <span id="stat-total" class="text-xs text-slate-600"> من 0</span>
+          </div>
+          <div class="bg-emerald-50 border border-emerald-200 p-4 rounded-xl text-center">
+            <span class="text-xs text-emerald-700 font-bold block mb-1">إجابات صحيحة</span>
+            <span id="stat-correct" class="text-2xl font-black text-emerald-600">0</span>
+          </div>
+          <div class="bg-amber-50 border border-amber-200 p-4 rounded-xl text-center">
+            <span class="text-xs text-amber-700 font-bold block mb-1">إجابات ثانوية</span>
+            <span id="stat-secondary" class="text-2xl font-black text-amber-600">0</span>
+          </div>
+          <div class="bg-rose-50 border border-rose-200 p-4 rounded-xl text-center">
+            <span class="text-xs text-rose-700 font-bold block mb-1">إجابات خاطئة</span>
+            <span id="stat-wrong" class="text-2xl font-black text-rose-600">0</span>
+          </div>
+        </div>
+
+        <!-- Filter Buttons -->
+        <div class="flex flex-wrap gap-2 pt-2 border-t border-slate-100">
+          <button onclick="app.setReviewFilter('all')" id="btn-filter-all" class="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-slate-900 text-white">
+            عرض الكل
+          </button>
+          <button onclick="app.setReviewFilter('wrong')" id="btn-filter-wrong" class="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200">
+            عرض الخاطئة فقط
+          </button>
+          <button onclick="app.setReviewFilter('wrong_secondary')" id="btn-filter-wrong-sec" class="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200">
+            عرض الخاطئة والثانوية
+          </button>
+        </div>
+      </div>
+
+      <div id="review-questions-list" class="space-y-4"></div>
+    </section>
+
+  </main>
+
+  <!-- Modals -->
+  <!-- Modal: New Project -->
+  <div id="modal-project" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 border border-slate-200 shadow-xl">
+      <h3 class="text-lg font-bold text-slate-800">إنشاء مشروع جديد</h3>
+      <div class="space-y-3">
+        <div>
+          <label class="text-xs font-bold text-slate-600 block mb-1">اسم المشروع</label>
+          <input type="text" id="input-proj-name" placeholder="مثلاً: تجميعات النموذج 120" class="w-full border border-slate-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-indigo-600">
+        </div>
+        <div>
+          <label class="text-xs font-bold text-slate-600 block mb-1">وصف (اختياري)</label>
+          <textarea id="input-proj-desc" placeholder="وصف محتوى الحقيبة أو الملاحظات..." class="w-full border border-slate-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-indigo-600 h-20"></textarea>
+        </div>
+      </div>
+      <div class="flex justify-end space-x-2 space-x-reverse pt-2">
+        <button onclick="app.closeModal('modal-project')" class="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-xl">إلغاء</button>
+        <button onclick="app.saveProject()" class="px-5 py-2 text-sm font-medium bg-indigo-600 text-white rounded-xl hover:bg-indigo-700">إنشاء</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Import Data -->
+  <div id="modal-import" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-xl w-full p-6 space-y-4 border border-slate-200 shadow-xl">
+      <h3 class="text-lg font-bold text-slate-800">استيراد أسئلة ونماذج</h3>
+      <p class="text-xs text-slate-600 leading-relaxed">
+        الصق كود JSON أو ارفع ملف بصيغة <span class="font-mono bg-slate-100 px-1 py-0.5 rounded text-indigo-700">.json</span> أو <span class="font-mono bg-slate-100 px-1 py-0.5 rounded text-indigo-700">.txt</span> يتبع المخطط المعتمد.
+      </p>
+
+      <div class="space-y-3">
+        <div>
+          <label class="text-xs font-bold text-slate-600 block mb-1">رفع ملف</label>
+          <input type="file" id="file-import" accept=".json,.txt" class="w-full text-xs text-slate-600 file:mr-0 file:ml-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+        </div>
+        <div>
+          <label class="text-xs font-bold text-slate-600 block mb-1">أو الصق النص مباشرة</label>
+          <textarea id="text-import" placeholder='[ { "رقم_القسم": 1, "عنوان_القسم": "النموذج الأول", "الاسئلة": [...] } ]' class="w-full font-mono text-xs border border-slate-300 rounded-xl p-3 h-44 focus:outline-none focus:border-indigo-600"></textarea>
+        </div>
+        <div id="import-error" class="hidden text-xs text-rose-600 bg-rose-50 p-2.5 rounded-lg border border-rose-200"></div>
+      </div>
+
+      <div class="flex justify-end space-x-2 space-x-reverse pt-2">
+        <button onclick="app.closeModal('modal-import')" class="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-xl">إلغاء</button>
+        <button onclick="app.processImport()" class="px-5 py-2 text-sm font-medium bg-indigo-600 text-white rounded-xl hover:bg-indigo-700">معالجة وحفظ</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Database Layer (IndexedDB)
+    const DB_NAME = 'QuduratyDB';
+    const DB_VERSION = 1;
+    let db;
+
+    function initDB() {
+      return new Promise((resolve, reject) => {
+        const req = indexedDB.open(DB_NAME, DB_VERSION);
+        req.onupgradeneeded = (e) => {
+          const database = e.target.result;
+          if (!database.objectStoreNames.contains('projects')) {
+            database.createObjectStore('projects', { keyPath: 'id' });
+          }
+          if (!database.objectStoreNames.contains('models')) {
+            const mStore = database.createObjectStore('models', { keyPath: 'id' });
+            mStore.createIndex('projectId', 'projectId', { unique: false });
+          }
+          if (!database.objectStoreNames.contains('history')) {
+            const hStore = database.createObjectStore('history', { keyPath: 'id' });
+            hStore.createIndex('modelId', 'modelId', { unique: false });
+          }
+        };
+        req.onsuccess = (e) => {
+          db = e.target.result;
+          resolve(db);
+        };
+        req.onerror = (e) => reject(e.target.error);
+      });
+    }
+
+    const storage = {
+      async add(storeName, item) {
+        return new Promise((resolve, reject) => {
+          const tx = db.transaction(storeName, 'readwrite');
+          tx.objectStore(storeName).put(item);
+          tx.oncomplete = () => resolve(item);
+          tx.onerror = () => reject(tx.error);
+        });
+      },
+      async getAll(storeName) {
+        return new Promise((resolve, reject) => {
+          const tx = db.transaction(storeName, 'readonly');
+          const req = tx.objectStore(storeName).getAll();
+          req.onsuccess = () => resolve(req.result);
+          req.onerror = () => reject(req.error);
+        });
+      },
+      async getByIndex(storeName, indexName, value) {
+        return new Promise((resolve, reject) => {
+          const tx = db.transaction(storeName, 'readonly');
+          const req = tx.objectStore(storeName).index(indexName).getAll(value);
+          req.onsuccess = () => resolve(req.result);
+          req.onerror = () => reject(req.error);
+        });
+      },
+      async get(storeName, key) {
+        return new Promise((resolve, reject) => {
+          const tx = db.transaction(storeName, 'readonly');
+          const req = tx.objectStore(storeName).get(key);
+          req.onsuccess = () => resolve(req.result);
+          req.onerror = () => reject(req.error);
+        });
+      }
+    };
+
+    // Main App Controller
+    const app = {
+      state: {
+        currentProjectId: null,
+        currentModelId: null,
+        currentExam: null,
+        timerInterval: null,
+        reviewFilter: 'all'
+      },
+
+      async init() {
+        await initDB();
+        this.renderProjects();
+        this.attachEvents();
+      },
+
+      attachEvents() {
+        document.getElementById('file-import').addEventListener('change', (e) => {
+          const file = e.target.files[0];
+          if (!file) return;
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            document.getElementById('text-import').value = event.target.result;
+          };
+          reader.readAsText(file);
+        });
+      },
+
+      navigate(viewName) {
+        ['projects', 'project-detail', 'exam', 'results'].forEach(v => {
+          document.getElementById(`view-${v}`).classList.add('hidden');
+        });
+        document.getElementById(`view-${viewName}`).classList.remove('hidden');
+        window.scrollTo(0, 0);
+      },
+
+      openNewProjectModal() {
+        document.getElementById('input-proj-name').value = '';
+        document.getElementById('input-proj-desc').value = '';
+        document.getElementById('modal-project').classList.remove('hidden');
+      },
+
+      openImportModal() {
+        document.getElementById('text-import').value = '';
+        document.getElementById('file-import').value = '';
+        document.getElementById('import-error').classList.add('hidden');
+        document.getElementById('modal-import').classList.remove('hidden');
+      },
+
+      closeModal(id) {
+        document.getElementById(id).classList.add('hidden');
+      },
+
+      async saveProject() {
+        const name = document.getElementById('input-proj-name').value.trim();
+        const desc = document.getElementById('input-proj-desc').value.trim();
+        if (!name) return;
+
+        const proj = {
+          id: 'proj_' + Date.now(),
+          name,
+          description: desc,
+          createdAt: new Date().toISOString()
+        };
+        await storage.add('projects', proj);
+        this.closeModal('modal-project');
+        this.renderProjects();
+      },
+
+      async renderProjects() {
+        const list = await storage.getAll('projects');
+        const grid = document.getElementById('projects-grid');
+        grid.innerHTML = '';
+
+        if (list.length === 0) {
+          grid.innerHTML = `
+            <div class="col-span-full py-12 text-center text-slate-600 bg-white rounded-2xl border border-dashed border-slate-300">
+              لا توجد مشاريع مضافة حالياً. أنشئ أول مشروع للمذاكرة!
+            </div>
+          `;
+          return;
+        }
+
+        list.forEach(p => {
+          const el = document.createElement('div');
+          el.className = 'bg-white p-5 rounded-2xl border border-slate-200 hover:border-indigo-400 hover:shadow-md transition-all cursor-pointer flex flex-col justify-between';
+          el.onclick = () => app.openProject(p.id);
+          el.innerHTML = `
+            <div class="space-y-2">
+              <span class="inline-block px-2.5 py-1 text-xs font-semibold bg-indigo-50 text-indigo-700 rounded-md">مشروع</span>
+              <h3 class="font-bold text-lg text-slate-800">${p.name}</h3>
+              <p class="text-xs text-slate-600 line-clamp-2">${p.description || 'لا يوجد وصف'}</p>
+            </div>
+            <div class="pt-4 mt-4 border-t border-slate-100 flex justify-between items-center text-xs text-slate-600">
+              <span>تاريخ الإضافة: ${new Date(p.createdAt).toLocaleDateString('ar-SA')}</span>
+              <span class="text-indigo-600 font-bold">فتح ←</span>
+            </div>
+          `;
+          grid.appendChild(el);
+        });
+      },
+
+      async openProject(id) {
+        this.state.currentProjectId = id;
+        const proj = await storage.get('projects', id);
+        document.getElementById('project-title').textContent = proj.name;
+        document.getElementById('project-desc').textContent = proj.description || '';
+        await this.renderModels();
+        this.navigate('project-detail');
+      },
+
+      async processImport() {
+        const raw = document.getElementById('text-import').value.trim();
+        const errEl = document.getElementById('import-error');
+        errEl.classList.add('hidden');
+
+        if (!raw) {
+          errEl.textContent = 'يرجى لصق نص أو رفع ملف أولاً.';
+          errEl.classList.remove('hidden');
+          return;
+        }
+
+        try {
+          const parsed = JSON.parse(raw);
+          if (!Array.isArray(parsed)) throw new Error('يجب أن يكون الملف مصفوفة نماذج [ ... ]');
+
+          for (const item of parsed) {
+            const modelRecord = {
+              id: `mod_${this.state.currentProjectId}_${item.رقم_القسم || Date.now()}_${Math.floor(Math.random()*1000)}`,
+              projectId: this.state.currentProjectId,
+              number: item.رقم_القسم,
+              title: item.عنوان_القسم || `النموذج ${item.رقم_القسم}`,
+              questions: (item.الاسئلة || []).map(q => ({
+                id: q.رقم_السؤال,
+                type: q.نوع_السؤال || '',
+                passage: q.نص_القطعة || null,
+                text: q.نص_السؤال || '',
+                options: q.الخيارات || [],
+                correct: (q.الاجابة_الصحيحة || '').trim(),
+                secondary: Array.isArray(q.اجابات_ثانوية) ? q.اجابات_ثانوية.map(s => String(s).trim()) : []
+              }))
+            };
+            await storage.add('models', modelRecord);
+          }
+
+          this.closeModal('modal-import');
+          await this.renderModels();
+        } catch (err) {
+          errEl.textContent = `خطأ في بنية البيانات: ${err.message}`;
+          errEl.classList.remove('hidden');
+        }
+      },
+
+      async renderModels() {
+        const models = await storage.getByIndex('models', 'projectId', this.state.currentProjectId);
+        const grid = document.getElementById('models-grid');
+        grid.innerHTML = '';
+
+        if (models.length === 0) {
+          grid.innerHTML = `
+            <div class="col-span-full py-12 text-center text-slate-600 bg-white rounded-2xl border border-dashed border-slate-300">
+              لم تقم باستخراج أي نماذج داخل هذا المشروع بعد. انقر على "استيراد أسئلة" للبدء.
+            </div>
+          `;
+          return;
+        }
+
+        for (const m of models) {
+          const history = await storage.getByIndex('history', 'modelId', m.id);
+          const lastAttempt = history.length > 0 ? history[history.length - 1] : null;
+
+          const card = document.createElement('div');
+          card.className = 'bg-white p-5 rounded-2xl border border-slate-200 hover:shadow-md transition-all flex flex-col justify-between';
+          card.innerHTML = `
+            <div class="space-y-3">
+              <div class="flex items-center justify-between">
+                <span class="px-2.5 py-0.5 rounded text-xs font-extrabold bg-indigo-50 text-indigo-700">
+                  نموذج #${m.number}
+                </span>
+                <span class="text-xs text-slate-600">${m.questions.length} سؤال</span>
+              </div>
+              <h4 class="font-bold text-slate-800 text-base leading-snug">${m.title}</h4>
+              
+              <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-100 text-xs">
+                ${lastAttempt ? `
+                  <div class="text-slate-600 font-medium">آخر محاولة: <span class="font-bold text-slate-800">${new Date(lastAttempt.date).toLocaleDateString('ar-SA')}</span></div>
+                  <div class="flex gap-2 mt-1 font-bold">
+                    <span class="text-emerald-700">✓ ${lastAttempt.correct}</span>
+                    <span class="text-amber-700">⚠ ${lastAttempt.secondary}</span>
+                    <span class="text-rose-700">✕ ${lastAttempt.wrong}</span>
+                  </div>
+                ` : `<span class="text-slate-600">لم يُختبر بعد</span>`}
+              </div>
+            </div>
+
+            <div class="pt-4 mt-4 border-t border-slate-100">
+              <button onclick="app.startExam('${m.id}')" class="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-bold transition-all shadow-sm">
+                بدء الاختبار
+              </button>
+            </div>
+          `;
+          grid.appendChild(card);
+        }
+      },
+
+      async startExam(modelId) {
+        const model = await storage.get('models', modelId);
+        if (!model || !model.questions.length) return;
+
+        this.state.currentModelId = modelId;
+        this.state.currentExam = {
+          model,
+          answers: {},
+          durationSeconds: model.questions.length * 60,
+          remainingSeconds: model.questions.length * 60
+        };
+
+        document.getElementById('exam-model-badge').textContent = `نموذج #${model.number}`;
+        document.getElementById('exam-model-title').textContent = model.title;
+
+        this.renderExamQuestions();
+        this.startTimer();
+        this.navigate('exam');
+      },
+
+      startTimer() {
+        clearInterval(this.state.timerInterval);
+        const timerEl = document.getElementById('exam-timer');
+
+        const updateDisplay = () => {
+          const m = Math.floor(this.state.currentExam.remainingSeconds / 60);
+          const s = this.state.currentExam.remainingSeconds % 60;
+          timerEl.textContent = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+        };
+
+        updateDisplay();
+        this.state.timerInterval = setInterval(() => {
+          this.state.currentExam.remainingSeconds--;
+          updateDisplay();
+
+          if (this.state.currentExam.remainingSeconds <= 0) {
+            clearInterval(this.state.timerInterval);
+            this.finishExam();
+          }
+        }, 1000);
+      },
+
+      renderExamQuestions() {
+        const container = document.getElementById('exam-questions-list');
+        container.innerHTML = '';
+
+        this.state.currentExam.model.questions.forEach((q, idx) => {
+          const qCard = document.createElement('div');
+          qCard.className = 'bg-white p-6 rounded-2xl border border-slate-200 space-y-4';
+          
+          let passageHtml = '';
+          if (q.passage) {
+            passageHtml = `
+              <div class="bg-indigo-50/50 p-4 rounded-xl border border-indigo-100 text-sm leading-relaxed text-slate-700">
+                <span class="font-bold block mb-1 text-indigo-900 text-xs">نص القطعة:</span>
+                ${q.passage}
+              </div>
+            `;
+          }
+
+          const optionsHtml = q.options.map(opt => `
+            <label class="flex items-center space-x-3 space-x-reverse p-3.5 rounded-xl border border-slate-200 hover:bg-slate-50 cursor-pointer transition-all has-[:checked]:border-indigo-600 has-[:checked]:bg-indigo-50/40">
+              <input type="radio" name="question_${idx}" value="${opt}" onchange="app.recordAnswer(${idx}, '${opt}')" class="w-4 h-4 text-indigo-600 border-slate-300 focus:ring-indigo-500">
+              <span class="text-sm font-medium text-slate-800">${opt}</span>
+            </label>
+          `).join('');
+
+          qCard.innerHTML = `
+            <div class="flex items-center justify-between text-xs text-slate-600 border-b border-slate-100 pb-2">
+              <span class="font-bold text-slate-700">سؤال ${idx + 1}</span>
+              ${q.type ? `<span class="bg-slate-100 px-2 py-0.5 rounded">${q.type}</span>` : ''}
+            </div>
+            ${passageHtml}
+            <h4 class="text-base font-bold text-slate-900 leading-normal">${q.text}</h4>
+            <div class="space-y-2 pt-2">${optionsHtml}</div>
+          `;
+          container.appendChild(qCard);
+        });
+      },
+
+      recordAnswer(qIndex, selectedOption) {
+        this.state.currentExam.answers[qIndex] = selectedOption;
+      },
+
+      submitExamConfirmation() {
+        if (confirm('هل أنت متأكد من رغبتك في تسليم الاختبار الآن؟')) {
+          clearInterval(this.state.timerInterval);
+          this.finishExam();
+        }
+      },
+
+      async finishExam() {
+        const { model, answers } = this.state.currentExam;
+        let correctCount = 0;
+        let secondaryCount = 0;
+        let wrongCount = 0;
+        let answeredCount = 0;
+
+        const evaluatedQuestions = model.questions.map((q, idx) => {
+          const userAns = (answers[idx] || '').trim();
+          const isAnswered = !!userAns;
+          if (isAnswered) answeredCount++;
+
+          const isCorrect = userAns === q.correct;
+          const isSecondary = !isCorrect && q.secondary.includes(userAns);
+          const isWrong = isAnswered && !isCorrect && !isSecondary;
+
+          if (isCorrect) correctCount++;
+          else if (isSecondary) secondaryCount++;
+          else if (isAnswered) wrongCount++;
+
+          return {
+            ...q,
+            userAns,
+            status: !isAnswered ? 'unanswered' : isCorrect ? 'correct' : isSecondary ? 'secondary' : 'wrong'
+          };
+        });
+
+        // Save Attempt to History
+        const attempt = {
+          id: 'hist_' + Date.now(),
+          modelId: model.id,
+          date: new Date().toISOString(),
+          totalQuestions: model.questions.length,
+          answered: answeredCount,
+          correct: correctCount,
+          secondary: secondaryCount,
+          wrong: wrongCount + (model.questions.length - answeredCount)
+        };
+        await storage.add('history', attempt);
+
+        this.state.lastResult = {
+          model,
+          attempt,
+          evaluatedQuestions
+        };
+
+        this.showResults();
+      },
+
+      showResults() {
+        const { model, attempt } = this.state.lastResult;
+        document.getElementById('result-model-title').textContent = `${model.title} (النموذج #${model.number})`;
+        document.getElementById('stat-answered').textContent = attempt.answered;
+        document.getElementById('stat-total').textContent = ` من ${attempt.totalQuestions}`;
+        document.getElementById('stat-correct').textContent = attempt.correct;
+        document.getElementById('stat-secondary').textContent = attempt.secondary;
+        document.getElementById('stat-wrong').textContent = attempt.wrong;
+
+        this.renderReviewQuestions();
+        this.navigate('results');
+      },
+
+      setReviewFilter(filter) {
+        this.state.reviewFilter = filter;
+        
+        const btnAll = document.getElementById('btn-filter-all');
+        const btnWrong = document.getElementById('btn-filter-wrong');
+        const btnWrongSec = document.getElementById('btn-filter-wrong-sec');
+
+        [btnAll, btnWrong, btnWrongSec].forEach(b => {
+          b.className = 'px-3.5 py-1.5 rounded-lg text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200';
+        });
+
+        if (filter === 'all') btnAll.className = 'px-3.5 py-1.5 rounded-lg text-xs font-bold bg-slate-900 text-white';
+        if (filter === 'wrong') btnWrong.className = 'px-3.5 py-1.5 rounded-lg text-xs font-bold bg-slate-900 text-white';
+        if (filter === 'wrong_secondary') btnWrongSec.className = 'px-3.5 py-1.5 rounded-lg text-xs font-bold bg-slate-900 text-white';
+
+        this.renderReviewQuestions();
+      },
+
+      renderReviewQuestions() {
+        const container = document.getElementById('review-questions-list');
+        container.innerHTML = '';
+        const { evaluatedQuestions } = this.state.lastResult;
+        const filter = this.state.reviewFilter;
+
+        const filtered = evaluatedQuestions.filter(q => {
+          if (filter === 'all') return true;
+          if (filter === 'wrong') return q.status === 'wrong' || q.status === 'unanswered';
+          if (filter === 'wrong_secondary') return q.status === 'wrong' || q.status === 'unanswered' || q.status === 'secondary';
+          return true;
+        });
+
+        if (filtered.length === 0) {
+          container.innerHTML = '<div class="py-8 text-center text-slate-600 bg-white rounded-2xl border border-slate-200">لا توجد أسئلة تطابق هذا الفلتر.</div>';
+          return;
+        }
+
+        filtered.forEach((q, idx) => {
+          const item = document.createElement('div');
+          item.className = 'bg-white p-5 rounded-2xl border border-slate-200 space-y-3';
+
+          const optionsList = q.options.map(opt => {
+            let style = 'bg-slate-50 border-slate-200 text-slate-700';
+            let badge = '';
+
+            const isCorrect = opt === q.correct;
+            const isChosen = opt === q.userAns;
+            const isSecondary = q.secondary.includes(opt);
+
+            if (isCorrect) {
+              style = 'bg-emerald-50 border-emerald-500 text-emerald-900 font-bold';
+              badge = '<span class="text-xs bg-emerald-200 text-emerald-800 px-2 py-0.5 rounded">الإجابة الصحيحة</span>';
+            } else if (isChosen && isSecondary) {
+              style = 'bg-amber-50 border-amber-500 text-amber-900 font-bold';
+              badge = '<span class="text-xs bg-amber-200 text-amber-800 px-2 py-0.5 rounded">إجابة ثانوية مختارة</span>';
+            } else if (isChosen && !isCorrect) {
+              style = 'bg-rose-50 border-rose-500 text-rose-900 font-bold';
+              badge = '<span class="text-xs bg-rose-200 text-rose-800 px-2 py-0.5 rounded">إجابتك الخاطئة</span>';
+            }
+
+            return `
+              <div class="p-3 rounded-xl border flex items-center justify-between text-sm ${style}">
+                <span>${opt}</span>
+                ${badge}
+              </div>
+            `;
+          }).join('');
+
+          item.innerHTML = `
+            <div class="flex items-center justify-between text-xs text-slate-600">
+              <span class="font-bold">سؤال #${q.id || (idx + 1)}</span>
+              ${q.passage ? '<span class="bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded font-bold">استيعاب مقروء</span>' : ''}
+            </div>
+            ${q.passage ? `<div class="p-3 bg-slate-50 rounded-xl text-xs text-slate-600 border border-slate-200">${q.passage}</div>` : ''}
+            <h4 class="font-bold text-slate-800 text-sm sm:text-base">${q.text}</h4>
+            <div class="space-y-2 pt-1">${optionsList}</div>
+          `;
+          container.appendChild(item);
+        });
+      },
+
+      retakeCurrentExam() {
+        this.startExam(this.state.currentModelId);
+      }
+    };
+
+    window.addEventListener('DOMContentLoaded', () => app.init());
+  </script>
+</body>
+</html>
