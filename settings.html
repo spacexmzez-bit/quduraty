@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>الإعدادات - قدراتي</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Tajawal', sans-serif; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen flex flex-col">
+
+  <!-- Header -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+    <div class="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3 space-x-reverse">
+        <a href="index.html" class="p-2 text-slate-600 hover:text-indigo-600 hover:bg-slate-100 rounded-xl transition-all" title="الرجوع للرئيسية">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+          </svg>
+        </a>
+        <div>
+          <h1 class="font-extrabold text-lg leading-tight text-slate-800">الإعدادات العامة</h1>
+          <p class="text-xs text-slate-600">إدارة مفاتيح الربط والنسخ الاحتياطي</p>
+        </div>
+      </div>
+      <a href="index.html" class="text-xs font-bold text-indigo-600 hover:underline">
+        العودة للاختبارات ←
+      </a>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="max-w-4xl mx-auto px-4 py-8 flex-1 w-full space-y-6">
+
+    <!-- AI Settings Card -->
+    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-5">
+      <div class="flex items-center space-x-3 space-x-reverse border-b border-slate-100 pb-4">
+        <div class="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center font-bold text-lg">
+          ⚡
+        </div>
+        <div>
+          <h2 class="text-lg font-bold text-slate-800">مساعد الذكاء الاصطناعي (AI Assistant)</h2>
+          <p class="text-xs text-slate-600">يُحفظ المفتاح محلياً على متصفحك بشكل آمن، ولن تحتاج لإدخاله في كل مرة</p>
+        </div>
+      </div>
+
+      <div class="space-y-4">
+        <div>
+          <label class="text-xs font-bold text-slate-700 block mb-1.5">مفتاح API الخاص بك (Gemini API Key)</label>
+          <div class="relative flex items-center">
+            <input 
+              type="password" 
+              id="ai-api-key" 
+              placeholder="AIzaSy..." 
+              class="w-full border border-slate-300 rounded-xl px-4 py-2.5 text-sm font-mono focus:outline-none focus:border-indigo-600 pr-4 pl-24"
+            >
+            <div class="absolute left-2 flex items-center space-x-1 space-x-reverse">
+              <button 
+                type="button" 
+                onclick="settings.toggleKeyVisibility()" 
+                id="btn-toggle-key" 
+                class="px-2 py-1 text-xs text-slate-600 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 rounded-lg transition-all"
+              >
+                إظهار
+              </button>
+            </div>
+          </div>
+          <p class="text-xs text-slate-600 mt-1.5 leading-relaxed">
+            يتم تخزين المفتاح داخل مساحة تخزين المتصفح (<span class="font-mono text-slate-700">localStorage</span>). لا يتم إرسال المفتاح إلى أي خادم خارجي سوى واجهة Google الرسمية عند طلب التفسير.
+          </p>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-3 pt-2">
+          <button 
+            onclick="settings.saveApiKey()" 
+            class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-xl text-sm transition-all shadow-sm"
+          >
+            حفظ المفتاح
+          </button>
+          <button 
+            onclick="settings.clearApiKey()" 
+            class="px-4 py-2.5 bg-rose-50 text-rose-600 hover:bg-rose-100 border border-rose-200 font-medium rounded-xl text-sm transition-all"
+          >
+            حذف المفتاح المحفوظ
+          </button>
+          <span id="save-status" class="text-xs font-bold hidden"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Backup & Data Management Card -->
+    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-5">
+      <div class="flex items-center space-x-3 space-x-reverse border-b border-slate-100 pb-4">
+        <div class="w-10 h-10 bg-slate-100 text-slate-700 rounded-xl flex items-center justify-center font-bold text-lg">
+          💾
+        </div>
+        <div>
+          <h2 class="text-lg font-bold text-slate-800">النسخ الاحتياطي والبيانات</h2>
+          <p class="text-xs text-slate-600">تصدير واستيراد كافة المشاريع، النماذج، وسجلات درجاتك السابقة</p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <!-- Export Box -->
+        <div class="p-4 rounded-xl border border-slate-200 bg-slate-50 space-y-3 flex flex-col justify-between">
+          <div class="space-y-1">
+            <h3 class="font-bold text-sm text-slate-800">تصدير نسخة احتياطية</h3>
+            <p class="text-xs text-slate-600 leading-relaxed">
+              قم بتحميل ملف JSON يحتوي على كامل مشاريعك، النماذج، الأسئلة، وسجل كل محاولاتك السابقة لحفظها من الضياع.
+            </p>
+          </div>
+          <button 
+            onclick="settings.exportDatabase()" 
+            class="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl transition-all"
+          >
+            تحميل النسخة الاحتياطية (.json)
+          </button>
+        </div>
+
+        <!-- Import Box -->
+        <div class="p-4 rounded-xl border border-slate-200 bg-slate-50 space-y-3 flex flex-col justify-between">
+          <div class="space-y-1">
+            <h3 class="font-bold text-sm text-slate-800">استعادة نسخة احتياطية</h3>
+            <p class="text-xs text-slate-600 leading-relaxed">
+              استيراد ملف نسخة احتياطية سابق تم تنزيله من المنصة واسترجاع كافة البيانات المحفوظة.
+            </p>
+          </div>
+          <div>
+            <input 
+              type="file" 
+              id="file-restore" 
+              accept=".json" 
+              onchange="settings.restoreDatabase(event)" 
+              class="hidden"
+            >
+            <button 
+              onclick="document.getElementById('file-restore').click()" 
+              class="w-full py-2.5 bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 text-xs font-bold rounded-xl transition-all"
+            >
+              اختيار ملف واستعادة
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div id="backup-status" class="text-xs p-3 rounded-xl hidden"></div>
+    </div>
+
+  </main>
+
+  <script>
+    // Database Layer
+    const DB_NAME = 'QuduratyDB';
+    const DB_VERSION = 1;
+    let db;
+
+    function initDB() {
+      return new Promise((resolve, reject) => {
+        const req = indexedDB.open(DB_NAME, DB_VERSION);
+        req.onupgradeneeded = (e) => {
+          const database = e.target.result;
+          if (!database.objectStoreNames.contains('projects')) {
+            database.createObjectStore('projects', { keyPath: 'id' });
+          }
+          if (!database.objectStoreNames.contains('models')) {
+            const mStore = database.createObjectStore('models', { keyPath: 'id' });
+            mStore.createIndex('projectId', 'projectId', { unique: false });
+          }
+          if (!database.objectStoreNames.contains('history')) {
+            const hStore = database.createObjectStore('history', { keyPath: 'id' });
+            hStore.createIndex('modelId', 'modelId', { unique: false });
+          }
+        };
+        req.onsuccess = (e) => {
+          db = e.target.result;
+          resolve(db);
+        };
+        req.onerror = (e) => reject(e.target.error);
+      });
+    }
+
+    const settings = {
+      STORAGE_KEY: 'quduraty_ai_api_key',
+
+      async init() {
+        await initDB();
+        this.loadApiKey();
+      },
+
+      loadApiKey() {
+        const savedKey = localStorage.getItem(this.STORAGE_KEY) || '';
+        document.getElementById('ai-api-key').value = savedKey;
+      },
+
+      saveApiKey() {
+        const keyInput = document.getElementById('ai-api-key');
+        const keyVal = keyInput.value.trim();
+        const statusEl = document.getElementById('save-status');
+
+        if (!keyVal) {
+          statusEl.textContent = 'يرجى إدخال مفتاح صالح أولاً.';
+          statusEl.className = 'text-xs font-bold text-rose-600 block';
+          return;
+        }
+
+        localStorage.setItem(this.STORAGE_KEY, keyVal);
+        statusEl.textContent = '✓ تم حفظ المفتاح بنجاح وسيبقى محفوظاً في متصفحك.';
+        statusEl.className = 'text-xs font-bold text-emerald-600 block';
+
+        setTimeout(() => {
+          statusEl.classList.add('hidden');
+        }, 4000);
+      },
+
+      clearApiKey() {
+        if (!confirm('هل أنت متأكد من رغبتك في حذف المفتاح المحفوظ؟')) return;
+        localStorage.removeItem(this.STORAGE_KEY);
+        document.getElementById('ai-api-key').value = '';
+        const statusEl = document.getElementById('save-status');
+        statusEl.textContent = 'تم مسح المفتاح بنجاح.';
+        statusEl.className = 'text-xs font-bold text-slate-600 block';
+        setTimeout(() => {
+          statusEl.classList.add('hidden');
+        }, 3000);
+      },
+
+      toggleKeyVisibility() {
+        const input = document.getElementById('ai-api-key');
+        const btn = document.getElementById('btn-toggle-key');
+        if (input.type === 'password') {
+          input.type = 'text';
+          btn.textContent = 'إخفاء';
+        } else {
+          input.type = 'password';
+          btn.textContent = 'إظهار';
+        }
+      },
+
+      async exportDatabase() {
+        const statusEl = document.getElementById('backup-status');
+        try {
+          const fetchStore = (name) => new Promise((res, rej) => {
+            const tx = db.transaction(name, 'readonly');
+            const req = tx.objectStore(name).getAll();
+            req.onsuccess = () => res(req.result);
+            req.onerror = () => rej(req.error);
+          });
+
+          const backupData = {
+            exportDate: new Date().toISOString(),
+            version: DB_VERSION,
+            projects: await fetchStore('projects'),
+            models: await fetchStore('models'),
+            history: await fetchStore('history')
+          };
+
+          const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupData, null, 2));
+          const dlAnchor = document.createElement('a');
+          dlAnchor.setAttribute("href", dataStr);
+          dlAnchor.setAttribute("download", `quduraty_backup_${new Date().toISOString().slice(0, 10)}.json`);
+          document.body.appendChild(dlAnchor);
+          dlAnchor.click();
+          dlAnchor.remove();
+
+          statusEl.textContent = '✓ تم تصدير النسخة الاحتياطية بنجاح.';
+          statusEl.className = 'text-xs p-3 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 block';
+        } catch (err) {
+          statusEl.textContent = `خطأ أثناء التصدير: ${err.message}`;
+          statusEl.className = 'text-xs p-3 rounded-xl bg-rose-50 text-rose-700 border border-rose-200 block';
+        }
+      },
+
+      async restoreDatabase(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const statusEl = document.getElementById('backup-status');
+        const reader = new FileReader();
+
+        reader.onload = async (e) => {
+          try {
+            const data = JSON.parse(e.target.result);
+            if (!data.projects || !data.models || !data.history) {
+              throw new Error('ملف النسخة الاحتياطية غير صالح أو تالف.');
+            }
+
+            if (!confirm(`سيتم دمج واستعادة (${data.projects.length}) مشاريع و(${data.models.length}) نماذج. هل تريد المتابعة؟`)) {
+              event.target.value = '';
+              return;
+            }
+
+            const restoreStore = (name, items) => new Promise((res, rej) => {
+              const tx = db.transaction(name, 'readwrite');
+              const store = tx.objectStore(name);
+              items.forEach(item => store.put(item));
+              tx.oncomplete = () => res();
+              tx.onerror = () => rej(tx.error);
+            });
+
+            await restoreStore('projects', data.projects);
+            await restoreStore('models', data.models);
+            await restoreStore('history', data.history);
+
+            statusEl.textContent = '✓ تمت استعادة النسخة الاحتياطية بنجاح!';
+            statusEl.className = 'text-xs p-3 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 block';
+            event.target.value = '';
+          } catch (err) {
+            statusEl.textContent = `فشلت الاستعادة: ${err.message}`;
+            statusEl.className = 'text-xs p-3 rounded-xl bg-rose-50 text-rose-700 border border-rose-200 block';
+          }
+        };
+
+        reader.readAsText(file);
+      }
+    };
+
+    window.addEventListener('DOMContentLoaded', () => settings.init());
+  </script>
+</body>
+</html>
