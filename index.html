@@ -10,6 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
   <style>
     body { font-family: 'Tajawal', sans-serif; }
+    html { scroll-behavior: smooth; }
   </style>
 </head>
 <body class="bg-slate-50 text-slate-900 min-h-screen flex flex-col">
@@ -26,7 +27,14 @@
           <p class="text-xs text-slate-600">منصة التدريب اللفظي المحاكية</p>
         </div>
       </div>
-      <div id="nav-actions" class="flex items-center space-x-2 space-x-reverse"></div>
+      <div class="flex items-center space-x-2 space-x-reverse">
+        <a href="settings.html" class="p-2 text-slate-600 hover:text-indigo-600 hover:bg-slate-100 rounded-xl transition-all" title="الإعدادات">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+        </a>
+      </div>
     </div>
   </header>
 
@@ -59,11 +67,24 @@
           </div>
           <p id="project-desc" class="text-sm text-slate-600"></p>
         </div>
-        <div class="flex items-center space-x-2 space-x-reverse">
-          <button onclick="app.openImportModal()" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-xl transition-all shadow-sm">
+        <div class="flex flex-wrap items-center gap-2">
+          <button onclick="app.deleteSelectedModels()" id="btn-delete-selected" class="hidden px-4 py-2 bg-rose-50 text-rose-600 hover:bg-rose-100 font-medium rounded-xl text-sm border border-rose-200 transition-all">
+            حذف المحدد (<span id="selected-count">0</span>)
+          </button>
+          <button onclick="app.openImportModal()" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-xl transition-all shadow-sm text-sm">
             استيراد أسئلة (JSON)
           </button>
+          <button onclick="app.deleteCurrentProject()" class="px-3 py-2 bg-rose-50 text-rose-600 hover:bg-rose-100 font-medium rounded-xl text-sm border border-rose-200 transition-all" title="حذف المشروع بالكامل">
+            حذف المشروع
+          </button>
         </div>
+      </div>
+
+      <div class="flex items-center justify-between px-1">
+        <label class="flex items-center space-x-2 space-x-reverse text-xs text-slate-600 cursor-pointer">
+          <input type="checkbox" id="select-all-models" onchange="app.toggleSelectAllModels(this.checked)" class="rounded text-indigo-600 focus:ring-indigo-500">
+          <span>تحديد الكل</span>
+        </label>
       </div>
 
       <div id="models-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"></div>
@@ -72,7 +93,7 @@
     <!-- View: Exam Running -->
     <section id="view-exam" class="hidden space-y-6">
       <!-- Exam Bar -->
-      <div class="sticky top-20 z-20 bg-white/90 backdrop-blur border border-slate-200 p-4 rounded-2xl flex items-center justify-between shadow-sm">
+      <div class="sticky top-20 z-20 bg-white/95 backdrop-blur border border-slate-200 p-4 rounded-2xl flex items-center justify-between shadow-sm">
         <div>
           <span class="text-xs font-bold text-indigo-600 block uppercase" id="exam-model-badge">نموذج</span>
           <h3 id="exam-model-title" class="font-bold text-slate-800 text-lg"></h3>
@@ -88,7 +109,20 @@
         </div>
       </div>
 
-      <div id="exam-questions-list" class="space-y-6"></div>
+      <!-- Main Layout with Question Palette for Desktop/Tablet only -->
+      <div class="flex flex-col md:flex-row gap-6 items-start">
+        <!-- Palette Sidebar: Visible on md and up (tablets/desktops) -->
+        <aside class="hidden md:block w-64 bg-white p-4 rounded-2xl border border-slate-200 sticky top-40 space-y-3">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+            <span class="text-xs font-bold text-slate-700">التنقل السريع</span>
+            <span id="palette-progress" class="text-xs text-indigo-600 font-bold">0 / 0</span>
+          </div>
+          <div id="question-palette-grid" class="grid grid-cols-5 gap-2 max-h-[60vh] overflow-y-auto p-1"></div>
+        </aside>
+
+        <!-- Question Cards Area -->
+        <div id="exam-questions-list" class="flex-1 w-full space-y-6"></div>
+      </div>
     </section>
 
     <!-- View: Exam Summary & Review -->
@@ -176,7 +210,7 @@
     <div class="bg-white rounded-2xl max-w-xl w-full p-6 space-y-4 border border-slate-200 shadow-xl">
       <h3 class="text-lg font-bold text-slate-800">استيراد أسئلة ونماذج</h3>
       <p class="text-xs text-slate-600 leading-relaxed">
-        الصق كود JSON أو ارفع ملف بصيغة <span class="font-mono bg-slate-100 px-1 py-0.5 rounded text-indigo-700">.json</span> أو <span class="font-mono bg-slate-100 px-1 py-0.5 rounded text-indigo-700">.txt</span> يتبع المخطط المعتمد.
+        الصق كود JSON أو ارفع ملف بصيغة <span class="font-mono bg-slate-100 px-1 py-0.5 rounded text-indigo-700">.json</span> أو <span class="font-mono bg-slate-100 px-1 py-0.5 rounded text-indigo-700">.txt</span> يتبع المخطط المعتمد. إذا كان النموذج موجوداً بالفعل فسيتم تحديث أسئلته دون تكرار.
       </p>
 
       <div class="space-y-3">
@@ -238,6 +272,14 @@
           tx.onerror = () => reject(tx.error);
         });
       },
+      async delete(storeName, key) {
+        return new Promise((resolve, reject) => {
+          const tx = db.transaction(storeName, 'readwrite');
+          tx.objectStore(storeName).delete(key);
+          tx.oncomplete = () => resolve();
+          tx.onerror = () => reject(tx.error);
+        });
+      },
       async getAll(storeName) {
         return new Promise((resolve, reject) => {
           const tx = db.transaction(storeName, 'readonly');
@@ -271,7 +313,8 @@
         currentModelId: null,
         currentExam: null,
         timerInterval: null,
-        reviewFilter: 'all'
+        reviewFilter: 'all',
+        selectedModelIds: new Set()
       },
 
       async init() {
@@ -349,25 +392,130 @@
 
         list.forEach(p => {
           const el = document.createElement('div');
-          el.className = 'bg-white p-5 rounded-2xl border border-slate-200 hover:border-indigo-400 hover:shadow-md transition-all cursor-pointer flex flex-col justify-between';
-          el.onclick = () => app.openProject(p.id);
+          el.className = 'bg-white p-5 rounded-2xl border border-slate-200 hover:border-indigo-400 hover:shadow-md transition-all flex flex-col justify-between';
           el.innerHTML = `
-            <div class="space-y-2">
+            <div class="space-y-2 cursor-pointer" onclick="app.openProject('${p.id}')">
               <span class="inline-block px-2.5 py-1 text-xs font-semibold bg-indigo-50 text-indigo-700 rounded-md">مشروع</span>
               <h3 class="font-bold text-lg text-slate-800">${p.name}</h3>
               <p class="text-xs text-slate-600 line-clamp-2">${p.description || 'لا يوجد وصف'}</p>
             </div>
-            <div class="pt-4 mt-4 border-t border-slate-100 flex justify-between items-center text-xs text-slate-600">
-              <span>تاريخ الإضافة: ${new Date(p.createdAt).toLocaleDateString('ar-SA')}</span>
-              <span class="text-indigo-600 font-bold">فتح ←</span>
+            <div class="pt-4 mt-4 border-t border-slate-100 flex justify-between items-center text-xs">
+              <span class="text-slate-600">تاريخ: ${new Date(p.createdAt).toLocaleDateString('ar-SA')}</span>
+              <div class="flex items-center space-x-2 space-x-reverse">
+                <button onclick="app.deleteProjectDirectly('${p.id}', '${p.name}')" class="text-rose-600 hover:underline">حذف</button>
+                <span class="text-slate-300">|</span>
+                <button onclick="app.openProject('${p.id}')" class="text-indigo-600 font-bold hover:underline">فتح ←</button>
+              </div>
             </div>
           `;
           grid.appendChild(el);
         });
       },
 
+      async deleteProjectDirectly(projectId, projectName) {
+        if (!confirm(`تحذير: هل أنت متأكد من حذف المشروع "${projectName}" وكافة النماذج والأسئلة وسجلات الاختبارات التابعة له نهائياً؟`)) {
+          return;
+        }
+        await this.purgeProjectData(projectId);
+        this.renderProjects();
+      },
+
+      async deleteCurrentProject() {
+        const proj = await storage.get('projects', this.state.currentProjectId);
+        if (!proj) return;
+        if (!confirm(`تحذير: هل تريد بالكامل حذف المشروع الحالي "${proj.name}" وجميع نماذجه وأسئلته وسجلات نتائجه؟ لا يمكن التراجع عن هذا الإجراء.`)) {
+          return;
+        }
+        await this.purgeProjectData(this.state.currentProjectId);
+        this.navigate('projects');
+        this.renderProjects();
+      },
+
+      async purgeProjectData(projectId) {
+        const models = await storage.getByIndex('models', 'projectId', projectId);
+        for (const m of models) {
+          const hist = await storage.getByIndex('history', 'modelId', m.id);
+          for (const h of hist) {
+            await storage.delete('history', h.id);
+          }
+          await storage.delete('models', m.id);
+        }
+        await storage.delete('projects', projectId);
+      },
+
+      async deleteSingleModel(modelId, modelTitle) {
+        if (!confirm(`هل أنت متأكد من حذف نموذج "${modelTitle}" وكافة أسئلته وسجلات نتائجه؟`)) {
+          return;
+        }
+        const hist = await storage.getByIndex('history', 'modelId', modelId);
+        for (const h of hist) {
+          await storage.delete('history', h.id);
+        }
+        await storage.delete('models', modelId);
+        this.state.selectedModelIds.delete(modelId);
+        this.renderModels();
+      },
+
+      async deleteSelectedModels() {
+        const count = this.state.selectedModelIds.size;
+        if (count === 0) return;
+
+        if (!confirm(`هل أنت متأكد من حذف عدد (${count}) نماذج محددة مع جميع أسئلتها وسجلاتها؟`)) {
+          return;
+        }
+
+        for (const modelId of this.state.selectedModelIds) {
+          const hist = await storage.getByIndex('history', 'modelId', modelId);
+          for (const h of hist) {
+            await storage.delete('history', h.id);
+          }
+          await storage.delete('models', modelId);
+        }
+
+        this.state.selectedModelIds.clear();
+        this.renderModels();
+      },
+
+      toggleModelSelection(modelId, isChecked) {
+        if (isChecked) {
+          this.state.selectedModelIds.add(modelId);
+        } else {
+          this.state.selectedModelIds.delete(modelId);
+        }
+        this.updateSelectionToolbar();
+      },
+
+      toggleSelectAllModels(isChecked) {
+        const checkboxes = document.querySelectorAll('.model-checkbox');
+        checkboxes.forEach(cb => {
+          cb.checked = isChecked;
+          if (isChecked) {
+            this.state.selectedModelIds.add(cb.dataset.id);
+          } else {
+            this.state.selectedModelIds.delete(cb.dataset.id);
+          }
+        });
+        this.updateSelectionToolbar();
+      },
+
+      updateSelectionToolbar() {
+        const btnDeleteSelected = document.getElementById('btn-delete-selected');
+        const selectedCount = document.getElementById('selected-count');
+        const count = this.state.selectedModelIds.size;
+
+        selectedCount.textContent = count;
+        if (count > 0) {
+          btnDeleteSelected.classList.remove('hidden');
+        } else {
+          btnDeleteSelected.classList.add('hidden');
+          const selectAllBox = document.getElementById('select-all-models');
+          if (selectAllBox) selectAllBox.checked = false;
+        }
+      },
+
       async openProject(id) {
         this.state.currentProjectId = id;
+        this.state.selectedModelIds.clear();
         const proj = await storage.get('projects', id);
         document.getElementById('project-title').textContent = proj.name;
         document.getElementById('project-desc').textContent = proj.description || '';
@@ -392,7 +540,7 @@
 
           for (const item of parsed) {
             const modelRecord = {
-              id: `mod_${this.state.currentProjectId}_${item.رقم_القسم || Date.now()}_${Math.floor(Math.random()*1000)}`,
+              id: `mod_${this.state.currentProjectId}_${item.رقم_القسم}`,
               projectId: this.state.currentProjectId,
               number: item.رقم_القسم,
               title: item.عنوان_القسم || `النموذج ${item.رقم_القسم}`,
@@ -421,6 +569,7 @@
         const models = await storage.getByIndex('models', 'projectId', this.state.currentProjectId);
         const grid = document.getElementById('models-grid');
         grid.innerHTML = '';
+        this.updateSelectionToolbar();
 
         if (models.length === 0) {
           grid.innerHTML = `
@@ -434,16 +583,20 @@
         for (const m of models) {
           const history = await storage.getByIndex('history', 'modelId', m.id);
           const lastAttempt = history.length > 0 ? history[history.length - 1] : null;
+          const isChecked = this.state.selectedModelIds.has(m.id);
 
           const card = document.createElement('div');
           card.className = 'bg-white p-5 rounded-2xl border border-slate-200 hover:shadow-md transition-all flex flex-col justify-between';
           card.innerHTML = `
             <div class="space-y-3">
               <div class="flex items-center justify-between">
-                <span class="px-2.5 py-0.5 rounded text-xs font-extrabold bg-indigo-50 text-indigo-700">
-                  نموذج #${m.number}
-                </span>
-                <span class="text-xs text-slate-600">${m.questions.length} سؤال</span>
+                <div class="flex items-center space-x-2 space-x-reverse">
+                  <input type="checkbox" data-id="${m.id}" ${isChecked ? 'checked' : ''} onchange="app.toggleModelSelection('${m.id}', this.checked)" class="model-checkbox rounded text-indigo-600 focus:ring-indigo-500">
+                  <span class="px-2.5 py-0.5 rounded text-xs font-extrabold bg-indigo-50 text-indigo-700">
+                    نموذج #${m.number}
+                  </span>
+                </div>
+                <button onclick="app.deleteSingleModel('${m.id}', '${m.title}')" class="text-xs text-rose-500 hover:text-rose-700">حذف</button>
               </div>
               <h4 class="font-bold text-slate-800 text-base leading-snug">${m.title}</h4>
               
@@ -455,7 +608,7 @@
                     <span class="text-amber-700">⚠ ${lastAttempt.secondary}</span>
                     <span class="text-rose-700">✕ ${lastAttempt.wrong}</span>
                   </div>
-                ` : `<span class="text-slate-600">لم يُختبر بعد</span>`}
+                ` : `<span class="text-slate-600">لم يُختبر بعد (${m.questions.length} سؤال)</span>`}
               </div>
             </div>
 
@@ -485,6 +638,7 @@
         document.getElementById('exam-model-title').textContent = model.title;
 
         this.renderExamQuestions();
+        this.renderQuestionPalette();
         this.startTimer();
         this.navigate('exam');
       },
@@ -506,7 +660,8 @@
 
           if (this.state.currentExam.remainingSeconds <= 0) {
             clearInterval(this.state.timerInterval);
-            this.finishExam();
+            alert('انتهى الوقت المخصص للاختبار! سيتم تسليم إجاباتك الحالية.');
+            this.finishExam(true);
           }
         }, 1000);
       },
@@ -517,7 +672,8 @@
 
         this.state.currentExam.model.questions.forEach((q, idx) => {
           const qCard = document.createElement('div');
-          qCard.className = 'bg-white p-6 rounded-2xl border border-slate-200 space-y-4';
+          qCard.id = `exam-q-${idx}`;
+          qCard.className = 'bg-white p-6 rounded-2xl border border-slate-200 space-y-4 scroll-mt-24';
           
           let passageHtml = '';
           if (q.passage) {
@@ -549,18 +705,70 @@
         });
       },
 
-      recordAnswer(qIndex, selectedOption) {
-        this.state.currentExam.answers[qIndex] = selectedOption;
-      },
+      renderQuestionPalette() {
+        const grid = document.getElementById('question-palette-grid');
+        grid.innerHTML = '';
+        const total = this.state.currentExam.model.questions.length;
+        const answeredCount = Object.keys(this.state.currentExam.answers).length;
 
-      submitExamConfirmation() {
-        if (confirm('هل أنت متأكد من رغبتك في تسليم الاختبار الآن؟')) {
-          clearInterval(this.state.timerInterval);
-          this.finishExam();
+        document.getElementById('palette-progress').textContent = `${answeredCount} / ${total}`;
+
+        for (let i = 0; i < total; i++) {
+          const isAnswered = this.state.currentExam.answers[i] !== undefined;
+          const btn = document.createElement('button');
+          btn.id = `palette-btn-${i}`;
+          btn.className = `w-10 h-10 rounded-xl text-xs font-bold transition-all flex items-center justify-center ${
+            isAnswered ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+          }`;
+          btn.textContent = i + 1;
+          btn.onclick = () => {
+            const target = document.getElementById(`exam-q-${i}`);
+            if (target) target.scrollIntoView({ behavior: 'smooth' });
+          };
+          grid.appendChild(btn);
         }
       },
 
-      async finishExam() {
+      recordAnswer(qIndex, selectedOption) {
+        this.state.currentExam.answers[qIndex] = selectedOption;
+        
+        // Update Palette button status
+        const btn = document.getElementById(`palette-btn-${qIndex}`);
+        if (btn) {
+          btn.className = 'w-10 h-10 rounded-xl text-xs font-bold transition-all flex items-center justify-center bg-indigo-600 text-white';
+        }
+        const total = this.state.currentExam.model.questions.length;
+        const answeredCount = Object.keys(this.state.currentExam.answers).length;
+        const progressEl = document.getElementById('palette-progress');
+        if (progressEl) progressEl.textContent = `${answeredCount} / ${total}`;
+      },
+
+      submitExamConfirmation() {
+        const total = this.state.currentExam.model.questions.length;
+        const answeredCount = Object.keys(this.state.currentExam.answers).length;
+        const missingCount = total - answeredCount;
+
+        // Requirement 2: Reject submission if unanswered questions remain
+        if (missingCount > 0) {
+          // Find first unanswered question and scroll to it
+          for (let i = 0; i < total; i++) {
+            if (this.state.currentExam.answers[i] === undefined) {
+              const el = document.getElementById(`exam-q-${i}`);
+              if (el) el.scrollIntoView({ behavior: 'smooth' });
+              break;
+            }
+          }
+          alert(`لا يمكنك تسليم الاختبار! يتبقى لديك (${missingCount}) سؤال لم تتم الإجابة عليه. يجب حل كافة الأسئلة أولاً.`);
+          return;
+        }
+
+        if (confirm('أجبت على كافة الأسئلة. هل أنت متأكد من رغبتك في تسليم الاختبار الآن؟')) {
+          clearInterval(this.state.timerInterval);
+          this.finishExam(false);
+        }
+      },
+
+      async finishExam(isTimeOut = false) {
         const { model, answers } = this.state.currentExam;
         let correctCount = 0;
         let secondaryCount = 0;
